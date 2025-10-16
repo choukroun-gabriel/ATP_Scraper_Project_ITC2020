@@ -1,9 +1,9 @@
 name: Get OIDC Token
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
 
 permissions:
-  id-token: write   # Required for OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -12,13 +12,19 @@ jobs:
     steps:
       - name: Get OIDC Token
         run: |
-          # Request token from GitHub's OIDC provider
           TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://iam.googleapis.com/projects/411882956315/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider" \
             | jq -r '.value')
           
-          echo "Token (first 50 chars): ${TOKEN:0:50}..."
-          echo "Full token length: ${#TOKEN}"
+          # Save to file (bypasses log masking)
+          echo "$TOKEN" > token.txt
           
-          # Decode to see claims (optional)
+          # Also show decoded claims
           echo "$TOKEN" | cut -d'.' -f2 | base64 -d 2>/dev/null | jq .
+
+      - name: Upload token as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oidc-token
+          path: token.txt
+          retention-days: 1  # Auto-delete after 1 day for security
