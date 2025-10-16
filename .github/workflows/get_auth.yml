@@ -1,46 +1,22 @@
-name: Test OIDC Token Generation
+name: Generate OIDC Token
 
 on:
-  workflow_dispatch:  # Manual trigger
-  push:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  test-oidc:
+  generate-token:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # This enables OIDC token generation
+      id-token: write
       contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Get OIDC Token
-        id: oidc
+      - name: Generate OIDC Token
         run: |
-          # Get the OIDC token from GitHub Actions
-          echo "OIDC Token:"
+          echo "=== OIDC Token ==="
           echo "${{ steps.oidc.outputs.token }}"
-          
-          # Decode the token to see its contents (for debugging)
-          echo "Decoded token header:"
-          echo "${{ steps.oidc.outputs.token }}" | cut -d'.' -f1 | base64 -d | jq .
-          
-          echo "Decoded token payload:"
-          echo "${{ steps.oidc.outputs.token }}" | cut -d'.' -f2 | base64 -d | jq .
+          echo "=================="
+        id: oidc
         env:
           ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-
-      - name: Test Token Exchange
-        run: |
-          # This will be your JWT token for testing
-          JWT_TOKEN="${{ steps.oidc.outputs.token }}"
-          
-          echo "JWT Token for testing:"
-          echo "$JWT_TOKEN"
-          
-          # You can use this token in your Python application
-          echo "Use this token in your WorkforceIdentityManager:"
-          echo "user_context = {'jwt_token': '$JWT_TOKEN'}"
