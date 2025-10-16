@@ -12,11 +12,18 @@ jobs:
 
     steps:
       - name: Generate OIDC Token
+        id: oidc
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const token = await github.rest.actions.getOrgOidcCustomClaimTemplate({
+              org: context.repo.owner
+            });
+            console.log('OIDC Token:', token.data);
+            return token.data;
+
+      - name: Display Token
         run: |
           echo "=== OIDC Token ==="
-          echo "${{ steps.oidc.outputs.token }}"
+          echo "${{ steps.oidc.outputs.result }}"
           echo "=================="
-        id: oidc
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
